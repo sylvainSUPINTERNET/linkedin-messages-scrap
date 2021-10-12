@@ -88,8 +88,8 @@ export const recursiveTimeout = (startAt:number = 0, arr: any[], page:any, resp:
     await page.click('body > nav > div > a.nav__button-secondary');
     let pass = process.env.PASSWORD;
     let login = process.env.LOGIN;
-    await page.$eval("#username", (el: any) => el.value = login );
-    await page.$eval("#password", (el: any) => el.value = pass );
+    await page.$eval("#username", (el: any, login:any) => {el.value = login}, login );
+    await page.$eval("#password", (el: any, pass:any) => {el.value = pass}, pass );
     await page.click('#organic-div > form > div.login__form_action_container > button');
     await page.waitForTimeout(4000)
     await page.click('#ember25');

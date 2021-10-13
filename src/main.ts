@@ -26,7 +26,7 @@ export const recursiveTimeout = (startAt:number = 0, arr: any[], page:any, resp:
 	let c = startAt;
 	let max = arr.length;
 
-    if ( resp === null ) resp = [];
+    if ( resp === null ) resp = {};
 
 	if ( c < max ) {
 		setTimeout( async () => {
@@ -36,34 +36,37 @@ export const recursiveTimeout = (startAt:number = 0, arr: any[], page:any, resp:
             await page.click(`li[id=${id}]`);
 
             let treated = false;
-            console.log("Supported messages type : email, basic");
-
+            
             try {
-                console.log("Parser : email")
-                const emailMessagesPs = await page.$eval('.spinmail-quill-editor__spin-break', (el:any) => el);
-                if ( Array.from(emailMessagesPs).length !== 0 ) {
-                    console.log("Email message type detected for ID : " + id);
-                    Array.from(emailMessagesPs).forEach( (p:any) => console.log(p.innerText));
-                    Array.from(emailMessagesPs).forEach( (p:any) => resp = [...resp, p.innerText]);
+                //const emailMessagesPs = await page.$$eval('.spinmail-quill-editor__spin-break', (el:any) => el.innerText);
+                const emailMessagesPs = await page.evaluate(() => Array.from(document.querySelectorAll('.spinmail-quill-editor__spin-break'), (e:any) => e.innerText));
+                console.log(emailMessagesPs);
+                for ( let i in emailMessagesPs) {
+                    resp[id] = [...resp[id], emailMessagesPs[i]];
                 }
+                console.log("email type detected");
                 treated = true;
             } catch ( e ) {
-                console.log("Not email type, trying another parser...")
+                console.log("No email")
             }
 
             if ( treated === false ) {
+
                 try {
-                    console.log("Parser: classic")
-                    const classicMessages = await page.$eval('.msg-s-event-listitem__body', (el:any) => el);
-                    if ( Array.from(classicMessages).length !== 0 ) {
-                        console.log("Classic message type detected for ID : " + id);
-                        Array.from(classicMessages).forEach( (p:any) => resp = [...resp, p.innerText]);
+                    const classicMessages = await page.evaluate(() => Array.from(document.querySelectorAll('.msg-s-event-listitem__body'), (e:any) => e.innerText));
+                    console.log(classicMessages);
+                    for ( const text of classicMessages ) {
+                        resp[id] = [...resp[id], text];
                     }
+                    console.log("classic type detected");
                     treated = true;
                 } catch ( e ) {
-                    console.log("Not basic message type");
-                }    
+                    console.log("No classic")
+                }
             }
+
+            console.log(resp[id]);
+            console.log("--------------------------");
 
 			c++;
             console.log(resp);
@@ -104,6 +107,8 @@ export const recursiveTimeout = (startAt:number = 0, arr: any[], page:any, resp:
         let cleanConvIds = Array.from(new Set(convIds.filter( (id:string) => id !== "")));
         return cleanConvIds;
      });
+
+     console.log("Supported messages type : email, basic");
 
      const end = await recursiveTimeout(0, conversations, page, null);
     
